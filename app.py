@@ -30,7 +30,7 @@ DAY_NAMES = {
 @st.cache_resource
 def get_gspread_client():
     try:
-if "gcp_service_account" in st.secrets:
+        if "gcp_service_account" in st.secrets:
 creds_dict = dict(st.secrets["gcp_service_account"])
 scopes = [
 "https://www.googleapis.com/auth/spreadsheets",
