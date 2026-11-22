@@ -216,16 +216,16 @@ if st.session_state.is_admin:
             orders_df = load_orders(sh)
             if not orders_df.empty:
                 st.dataframe(orders_df)
-
 else:
     st.markdown(f"### امروز: **{day_name}**")
+    
     if menu_item is None:
         st.warning("امروز سرویس نداریم.")
         st.stop()
     
     st.markdown(f"### منوی امروز: **{menu_item}**")
     
-        if before_deadline:
+    if before_deadline:
         st.success("مهلت ثبت سفارش باز است (تا ۱۱:۳۰)")
         col1, col2 = st.columns(2)
         with col1:
@@ -251,13 +251,5 @@ else:
                         st.error("اتصال به شیت برقرار نیست")
                 except Exception as e:
                     st.error(f"خطا در ثبت: {e}")
-    else:
-        st.error("مهلت تمام شده است.")
-        with col2:
-            if st.button("خیر، نمی‌خواهم"):
-                if sh:
-                    save_order(sh, today_str, st.session_state.user_code, st.session_state.user_name, False)
-                    st.success("ثبت شد")
-                    st.rerun()
     else:
         st.error("مهلت تمام شده است.")
