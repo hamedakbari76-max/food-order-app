@@ -124,8 +124,9 @@ st.title("🍚 سفارش غذای روزانه")
 
 try:
     sh = get_sheet()
-except Exception:
-    st.warning("برای اجرای کامل نیاز به تنظیمات گوگل شیت دارید.")
+    st.success("اتصال به گوگل شیت برقرار شد")
+except Exception as e:
+    st.error(f"خطای اتصال به شیت: {e}")
     sh = None
 
 if "logged_in" not in st.session_state:
