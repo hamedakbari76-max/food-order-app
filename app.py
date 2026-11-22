@@ -6,7 +6,6 @@ from google.oauth2.service_account import Credentials
 import gspread
 import pandas as pd
 import streamlit as st
-... بقیه ثابت‌ها (TEHRAN_TZ, DEADLINE, MENU, DAY_NAMES) بدون تغییر ...
 
 MENU = {
     5: "کوبیده",
