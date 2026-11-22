@@ -5,9 +5,10 @@ from zoneinfo import ZoneInfo
 import gspread
 from google.oauth2.service_account import Credentials
 from google.oauth2 import service_account
-==================== Settings ====================
+
 TEHRAN_TZ = ZoneInfo("Asia/Tehran")
 DEADLINE = time(11, 30)
+
 MENU = {
 5: "کوبیده",
 6: "قرمه سبزی",
@@ -16,6 +17,7 @@ MENU = {
 2: "عدس پلو",
 3: "جوجه کباب",
 }
+
 DAY_NAMES = {
 5: "شنبه",
 6: "یکشنبه",
@@ -25,6 +27,7 @@ DAY_NAMES = {
 3: "پنجشنبه",
 4: "جمعه",
 }
+
 @st.cache_resource
 def get_gspread_client():
 try:
@@ -61,6 +64,7 @@ except gspread.SpreadsheetNotFound:
 st.error(f"Sheet '{sheet_name}' not found.")
 st.stop()
 return sh
+
 def get_or_create_worksheet(sh, title, headers):
 try:
 ws = sh.worksheet(title)
@@ -68,17 +72,21 @@ except gspread.WorksheetNotFound:
 ws = sh.add_worksheet(title=title, rows=1000, cols=10)
 ws.append_row(headers)
 return ws
+
 def get_tehran_now():
 return datetime.now(TEHRAN_TZ)
+
 def is_before_deadline(now=None):
 if now is None:
 now = get_tehran_now()
 return now.time() < DEADLINE
+
 def get_today_menu(now=None):
 if now is None:
 now = get_tehran_now()
 wd = now.weekday()
 return MENU.get(wd, None), DAY_NAMES.get(wd, "")
+
 def load_users(sh):
 ws = get_or_create_worksheet(sh, "Users", ["code", "name", "active"])
 data = ws.get_all_records()
@@ -88,6 +96,7 @@ return pd.DataFrame(columns=["code", "name", "active"])
 if "active" in df.columns:
 df["active"] = df["active"].astype(str).str.lower().isin(["true", "1", "yes", "بله"])
 return df
+
 def load_orders(sh):
 ws = get_or_create_worksheet(sh, "Orders", ["date", "code", "name", "wants", "timestamp"])
 data = ws.get_all_records()
@@ -95,10 +104,12 @@ df = pd.DataFrame(data)
 if df.empty:
 return pd.DataFrame(columns=["date", "code", "name", "wants", "timestamp"])
 return df
+
 def save_order(sh, date_str, code, name, wants):
 ws = get_or_create_worksheet(sh, "Orders", ["date", "code", "name", "wants", "timestamp"])
 now_str = get_tehran_now().strftime("%Y-%m-%d %H:%M:%S")
 ws.append_row([date_str, code, name, "بله" if wants else "خیر", now_str])
+
 def add_user(sh, code, name):
 ws = get_or_create_worksheet(sh, "Users", ["code", "name", "active"])
 existing = ws.get_all_records()
@@ -107,25 +118,32 @@ if str(row.get("code", "")).strip() == str(code).strip():
 return False
 ws.append_row([str(code).strip(), name.strip(), "TRUE"])
 return True
+
 st.set_page_config(
 page_title="سفارش غذای روزانه",
 page_icon="🍚",
 layout="centered",
 initial_sidebar_state="collapsed"
 )
+
 st.markdown("""
+
 """, unsafe_allow_html=True)
+
 st.title("🍚 سفارش غذای روزانه")
+
 try:
 sh = get_sheet()
 except Exception:
 st.warning("برای اجرای کامل نیاز به تنظیمات گوگل شیت دارید.")
 sh = None
+
 if "logged_in" not in st.session_state:
 st.session_state.logged_in = False
 st.session_state.user_code = None
 st.session_state.user_name = None
 st.session_state.is_admin = False
+
 if not st.session_state.logged_in:
 st.markdown("### ورود با کد اختصاصی")
 code_input = st.text_input("کد خود را وارد کنید", placeholder="مثلاً 1234 یا ADMIN", key="login_code")
@@ -138,9 +156,9 @@ with col1:
         else:
             code = code_input.strip()
             
-            if code.
+            if code.upper() == st.secrets.
 
-upper() == st.secrets.get("ADMIN_CODE", "ADMIN").upper():
+get("ADMIN_CODE", "ADMIN").upper():
                 st.session_state.logged_in = True
                 st.session_state.is_admin = True
                 st.session_state.user_code = "ADMIN"
@@ -174,6 +192,7 @@ now = get_tehran_now()
 today_str = now.strftime("%Y-%m-%d")
 menu_item, day_name = get_today_menu(now)
 before_deadline = is_before_deadline(now)
+
 col_header1, col_header2 = st.columns([3, 1])
 with col_header1:
 st.markdown(f"
@@ -183,7 +202,9 @@ if st.button("خروج"):
 for key in list(st.session_state.keys()):
 del st.session_state[key]
 st.rerun()
+
 st.divider()
+
 if st.session_state.is_admin:
 st.header("🛠️ پنل مدیریت")
 
