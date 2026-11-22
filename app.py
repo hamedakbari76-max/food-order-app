@@ -1,13 +1,12 @@
-import streamlit as st
-import pandas as pd
+import json
 from datetime import datetime, time
 from zoneinfo import ZoneInfo
-import gspread
-from google.oauth2.service_account import Credentials
 from google.oauth2 import service_account
-
-TEHRAN_TZ = ZoneInfo("Asia/Tehran")
-DEADLINE = time(11, 30)
+from google.oauth2.service_account import Credentials
+import gspread
+import pandas as pd
+import streamlit as st
+... بقیه ثابت‌ها (TEHRAN_TZ, DEADLINE, MENU, DAY_NAMES) بدون تغییر ...
 
 MENU = {
     5: "کوبیده",
@@ -30,33 +29,31 @@ DAY_NAMES = {
 
 @st.cache_resource
 def get_gspread_client():
-    try:
-        if "gcp_service_account" in st.secrets:
-            creds_dict = dict(st.secrets["gcp_service_account"])
-            scopes = [
-                "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/drive"
-            ]
-            credentials = service_account.Credentials.from_service_account_info(
-                creds_dict, scopes=scopes
-            )
-            return gspread.authorize(credentials)
-
-        credentials = Credentials.from_service_account_file(
-            "credentials.json",
-            scopes=[
-                "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/drive"
-            ]
-        )
-        return gspread.authorize(credentials)
-    except Exception as e:
-        st.error(f"Error connecting to Google Sheet: {e}")
-        st.stop()
-
+scopes = [
+"https://www.googleapis.com/auth/spreadsheets",
+"https://www.googleapis.com/auth/drive",
+]
+if "gcp_service_account" in st.secrets:
+creds_dict = dict(st.secrets["gcp_service_account"])
+# تبدیل \n متنی به خط جدید واقعی در صورت نیاز
+if "private_key" in creds_dict:
+creds_dict["private_key"] = creds_dict["private_key"].replace("\n", "\n")
+credentials = service_account.Credentials.from_service_account_info(
+creds_dict, scopes=scopes
+)
+return gspread.authorize(credentials)
+credentials = Credentials.from_service_account_file(
+"credentials.json", scopes=scopes
+)
+return gspread.authorize(credentials)
 def get_sheet():
-    client = get_gspread_client()
-    sheet_name = st.secrets.get("SHEET_NAME", "FoodOrders")
+client = get_gspread_client()
+sheet_name = st.secrets.get("SHEET_NAME", "FoodOrders")
+return client.open(sheet_name)
+
+TEHRAN_TZ = ZoneInfo("Asia/Tehran")
+DEADLINE = time(11, 30)
+
     try:
         sh = client.open(sheet_name)
     except gspread.SpreadsheetNotFound:
@@ -123,10 +120,10 @@ st.set_page_config(page_title="سفارش غذای روزانه", page_icon="�
 st.title("🍚 سفارش غذای روزانه")
 
     try:
-     sh = get_sheet()
-except Exception:
-    st.warning("برای اجرای کامل نیاز به تنظیمات گوگل شیت دارید.")
-    sh = None
+  sh = get_sheet()
+except Exception as e:
+  st.error(f"خطای اتصال به گوگل شیت: {e}")
+  sh = None
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
