@@ -5,17 +5,16 @@ from zoneinfo import ZoneInfo
 import gspread
 from google.oauth2.service_account import Credentials
 from google.oauth2 import service_account
-==================== تنظیمات ====================
+==================== Settings ====================
 TEHRAN_TZ = ZoneInfo("Asia/Tehran")
-DEADLINE = time(11, 30)  # ساعت ۱۱:۳۰
-منوی ثابت هفتگی (weekday پایتون: دوشنبه=0 ... شنبه=5 یکشنبه=6)
+DEADLINE = time(11, 30)
 MENU = {
-5: "کوبیده",          # شنبه
-6: "قرمه سبزی",       # یکشنبه
-0: "جوجه کباب",       # دوشنبه
-1: "قیمه",            # سه‌شنبه
-2: "عدس پلو",         # چهارشنبه
-3: "جوجه کباب",       # پنجشنبه
+5: "کوبیده",
+6: "قرمه سبزی",
+0: "جوجه کباب",
+1: "قیمه",
+2: "عدس پلو",
+3: "جوجه کباب",
 }
 DAY_NAMES = {
 5: "شنبه",
@@ -26,10 +25,8 @@ DAY_NAMES = {
 3: "پنجشنبه",
 4: "جمعه",
 }
-==================== اتصال به گوگل شیت ====================
 @st.cache_resource
 def get_gspread_client():
-"""ساخت کلاینت gspread از روی secrets"""
 try:
 if "gcp_service_account" in st.secrets:
 creds_dict = dict(st.secrets["gcp_service_account"])
@@ -51,7 +48,7 @@ return gspread.authorize(credentials)
     )
     return gspread.authorize(credentials)
 except Exception as e:
-    st.error(f"خطا در اتصال به گوگل شیت: {e}")
+    st.error(f"Error connecting to Google Sheet: {e}")
     st.stop()
 
 def get_sheet():
@@ -61,7 +58,7 @@ try:
 sh = 
 client.open(sheet_name)
 except gspread.SpreadsheetNotFound:
-st.error(f"شیت با نام «{sheet_name}» پیدا نشد. لطفاً آن را بسازید و با سرویس اکانت به اشتراک بگذارید.")
+st.error(f"Sheet '{sheet_name}' not found.")
 st.stop()
 return sh
 def get_or_create_worksheet(sh, title, headers):
@@ -71,7 +68,6 @@ except gspread.WorksheetNotFound:
 ws = sh.add_worksheet(title=title, rows=1000, cols=10)
 ws.append_row(headers)
 return ws
-==================== توابع کمکی ====================
 def get_tehran_now():
 return datetime.now(TEHRAN_TZ)
 def is_before_deadline(now=None):
@@ -111,7 +107,6 @@ if str(row.get("code", "")).strip() == str(code).strip():
 return False
 ws.append_row([str(code).strip(), name.strip(), "TRUE"])
 return True
-==================== رابط کاربری ====================
 st.set_page_config(
 page_title="سفارش غذای روزانه",
 page_icon="🍚",
@@ -130,8 +125,7 @@ if "logged_in" not in st.session_state:
 st.session_state.logged_in = False
 st.session_state.user_code = None
 st.session_state.user_name = None
-st.session_state.
-is_admin = False
+st.session_state.is_admin = False
 if not st.session_state.logged_in:
 st.markdown("### ورود با کد اختصاصی")
 code_input = st.text_input("کد خود را وارد کنید", placeholder="مثلاً 1234 یا ADMIN", key="login_code")
@@ -144,7 +138,9 @@ with col1:
         else:
             code = code_input.strip()
             
-            if code.upper() == st.secrets.get("ADMIN_CODE", "ADMIN").upper():
+            if code.
+
+upper() == st.secrets.get("ADMIN_CODE", "ADMIN").upper():
                 st.session_state.logged_in = True
                 st.session_state.is_admin = True
                 st.session_state.user_code = "ADMIN"
@@ -234,8 +230,7 @@ with tab1:
                 not_ordered = active_users[~active_users["code"].astype(str).isin(ordered_codes)]
                 if not not_ordered.empty:
                     st.markdown("#### ⏳ هنوز اعلام نکرده‌اند:")
-
-st.dataframe(not_ordered[["name", "code"]].reset_index(drop=True), use_container_width=True)
+                    st.dataframe(not_ordered[["name", "code"]].reset_index(drop=True), use_container_width=True)
     else:
         st.info("در حالت آزمایشی، داده‌ای وجود ندارد.")
 
@@ -246,7 +241,8 @@ with tab2:
         new_name = st.text_input("نام کامل")
         submitted = st.form_submit_button("افزودن")
         if submitted:
-            if new_code and new_name and sh is not None:
+
+if new_code and new_name and sh is not None:
                 success = add_user(sh, new_code, new_name)
                 if success:
                     st.success(f"کاربر «{new_name}» با کد {new_code} اضافه شد.")
@@ -343,9 +339,7 @@ if before_deadline:
             if sh is not None:
                 save_order(sh, today_str, st.session_state.user_code, st.session_state.user_name, False)
                 st.success("اعلام شما ثبت شد: خیر")
-                st.
-
-rerun()
+                st.rerun()
             else:
                 st.success("در حالت آزمایشی ثبت شد (خیر)")
 else:
