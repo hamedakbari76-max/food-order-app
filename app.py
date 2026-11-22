@@ -163,10 +163,10 @@ st.title("🍚 سفارش غذای روزانه")
 
 # اتصال به شیت
 try:
-    sh = get_sheet()
-except Exception:
-    st.warning("برای اجرای کامل نیاز به تنظیمات گوگل شیت دارید. در حال حاضر حالت آزمایشی (بدون ذخیره‌سازی) فعال است.")
-    sh = None
+  sh = get_sheet()
+except Exception as e:
+  st.error(f"خطای واقعی: {e}")
+  sh = None
 
 # ==================== ورود ====================
 if "logged_in" not in st.session_state:
