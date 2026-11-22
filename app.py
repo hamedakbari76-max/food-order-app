@@ -122,8 +122,8 @@ st.set_page_config(page_title="سفارش غذای روزانه", page_icon="�
 
 st.title("🍚 سفارش غذای روزانه")
 
-try:
-    sh = get_sheet()
+    try:
+        sh = get_sheet()
 except Exception:
     st.warning("برای اجرای کامل نیاز به تنظیمات گوگل شیت دارید.")
     sh = None
