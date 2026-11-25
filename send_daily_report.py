@@ -35,18 +35,27 @@ DAY_NAMES = {
 
 # ---------------- اتصال به گوگل شیت ----------------
 def get_gspread_client():
-    # از Secret گیت‌هاب می‌خونه
     creds_json = os.getenv("GCP_SERVICE_ACCOUNT")
     if not creds_json:
-        raise Exception("GCP_SERVICE_ACCOUNT پیدا نشد")
+        raise RuntimeError("GCP_SERVICE_ACCOUNT پیدا نشد")
 
-    creds_dict = json.loads(creds_json)
+    try:
+        creds_dict = json.loads(creds_json)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            f"GCP_SERVICE_ACCOUNT یک JSON معتبر نیست: {exc}"
+        ) from exc
+
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
+        "https://www.googleapis.com/auth/drive",
     ]
-    credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+    credentials = Credentials.from_service_account_info(
+        creds_dict,
+        scopes=scopes,
+    )
     return gspread.authorize(credentials)
+
 
 def load_today_orders():
     client = get_gspread_client()
@@ -81,7 +90,11 @@ def build_message(orders_df):
         yes_count = 0
     else:
         yes_count = len(
-            orders_df[orders_df["wants"].isin(["بله", True, "TRUE", "yes", 1])]
+            orders_df[
+                orders_df["wants"].isin(
+                    ["بله", True, "TRUE", "yes", 1]
+                )
+            ]
         )
 
     message = (
@@ -93,23 +106,48 @@ def build_message(orders_df):
 
 # ---------------- ارسال پیامک ----------------
 def send_sms(message):
-    url = f"https://api.kavenegar.com/v1/{KAVENEGAR_API_KEY}/sms/send.json"
+    if not KAVENEGAR_API_KEY:
+        raise RuntimeError("KAVENEGAR_API_KEY پیدا نشد")
+
+    url = (
+        f"https://api.kavenegar.com/v1/"
+        f"{KAVENEGAR_API_KEY}/sms/send.json"
+    )
     params = {
         "receptor": RECEPTOR,
-        "message": message
+        "message": message,
     }
 
     response = requests.get(url, params=params, timeout=15)
-    result = response.json()
 
-    if result.get("return", {}).get("status") == 200:
+    print(f"HTTP status: {response.status_code}")
+    print(f"Content-Type: {response.headers.get('Content-Type', 'نامشخص')}")
+
+    if not response.ok:
+        raise RuntimeError(
+            f"خطا در درخواست کاوه‌نگار؛ "
+            f"کد HTTP {response.status_code}: "
+            f"{response.text[:300]}"
+        )
+
+    try:
+        result = response.json()
+    except requests.exceptions.JSONDecodeError as exc:
+        raise RuntimeError(
+            "پاسخ کاوه‌نگار JSON معتبر نیست؛ "
+            f"کد HTTP {response.status_code}"
+        ) from exc
+
+    status = result.get("return", {}).get("status")
+
+    if status == 200:
         print("✅ پیامک با موفقیت ارسال شد")
         print(message)
         return True
-    else:
-        print("❌ خطا در ارسال:")
-        print(result)
-        return False
+
+    print("❌ خطا در ارسال:")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return False
 
 # ---------------- اجرا ----------------
 if __name__ == "__main__":
