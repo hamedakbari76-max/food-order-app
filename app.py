@@ -11,7 +11,7 @@ from google.oauth2.service_account import Credentials
 from google.oauth2 import service_account
 
 TEHRAN_TZ = ZoneInfo("Asia/Tehran")
-DEADLINE = time(11, 30)
+DEADLINE = time(12, 00)
 PASSWORD_ITERATIONS = 300000
 
 MENU = {
@@ -658,7 +658,7 @@ else:
 
     if before_deadline:
 
-        st.success("مهلت ثبت سفارش باز است (تا ۱۱:۳۰)")
+        st.success("مهلت ثبت سفارش باز است (تا ۱۲:۰۰)")
 
         st.markdown("### 📝 توضیحات و درخواست‌های خاص")
 
